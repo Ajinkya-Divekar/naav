@@ -212,78 +212,45 @@ const Dashboard = () => {
     },
   ];
 
-   const correctOptions = questionList
+   const [questionIdx, setQuestionIdx] = useState(0);
+  const [selectedOptions, setSelectedOptions] = useState([]);
+  const [selectedGridButtons, setSelectedGridButtons] = useState({});
+  const [questionList, setQuestionList] = useState(
+    allQuestions.filter((question) => question.type === "aptitude")
+  );
+
+  const correctOptions = questionList
     .map((question) => question.options.find((option) => option.isCorrect))
     .map((correctOption) => correctOption.label);
 
-  const [questionIdx, setQuestionIdx] = useState(0); //used to navigate between questions
-  const [selectedOptions, setSelectedOptions] = useState([]); // a list of all user selected options (A,B,C,D)
-  const [selectedGridButtons, setSelectedGridButtons] = useState({}); //Used to manipulate the Question Grid attibutes
-
-  // Move to next question
   const nextQuestion = () => {
     if (questionIdx < questionList.length - 1) {
       setQuestionIdx(questionIdx + 1);
     }
   };
 
-  //Move to previous question
   const prevQuestion = () => {
     if (questionIdx > 0) {
       setQuestionIdx(questionIdx - 1);
     }
   };
 
-  // select an option for a particular question
   const selectOption = (option) => {
     // Update selectedOptions list
     const updatedSelectedOptions = [...selectedOptions];
     updatedSelectedOptions[questionIdx] = option;
     setSelectedOptions(updatedSelectedOptions);
 
-    // Update Grid
     setSelectedGridButtons((prevState) => ({
       ...prevState,
       [questionIdx]: "selected",
     }));
   };
 
-  // Navigate using Grid buttons
   const changeQuestion = (index) => {
     setQuestionIdx(index - 1);
   };
 
-  //calculate result, store wrongly selected subtypes
-  const displayBro = () => {
-    let res = 0;
-    const wrongTypesDictionary = {};
-
-    for (let i = 0; i < correctOptions.length; i++) {
-      if (correctOptions[i] !== selectedOptions[i]) {
-        const wrongSubtype = questionList[i].subtype;
-
-        // Check if the subtype is already in the dictionary
-        if (wrongTypesDictionary.hasOwnProperty(wrongSubtype)) {
-          // If yes, increment the count
-          wrongTypesDictionary[wrongSubtype] += 1;
-        } else {
-          // If no, initialize the count to 1
-          wrongTypesDictionary[wrongSubtype] = 1;
-        }
-      } else {
-        res += 1; //increase marks by 1 if correct
-      }
-    }
-
-    // display stuff for debugging
-    alert(
-      `Selected Options: ${selectedOptions}\nCorrect Options: ${correctOptions}`
-    );
-    alert("result: " + res);
-    alert(`Wrong Types Dictionary: ${JSON.stringify(wrongTypesDictionary)}`);
-  };
-
-  // mark question as review in grid
   const reviewMark = () => {
     setSelectedGridButtons((prevState) => ({
       ...prevState,
@@ -291,6 +258,36 @@ const Dashboard = () => {
     }));
   };
 
+  const displayBro = () => {
+    let res = 0;
+    for (let i = 0; i < correctOptions.length; i++) {
+      if (correctOptions[i] === selectedOptions[i]) {
+        res += 1;
+      }
+    }
+    alert(selectedOptions + "\n" + correctOptions);
+    alert(res);
+  };
+
+  const nextSection = () => {
+    const moveon = window.confirm(
+      "Are you sure you want to go to the next section?"
+    );
+    if (moveon) {
+      displayBro();
+      if (questionList[questionIdx].type === "aptitude") {
+        setQuestionIdx(0);
+        setSelectedGridButtons({});
+        setSelectedOptions([]);
+        setQuestionList(
+          allQuestions.filter((question) => question.type === "logical")
+        );
+      } else {
+        alert("Test Submitted");
+      }
+    }
+  };
+ 
   return (
     <div className="container">
       <div className="quiz-container">
@@ -354,8 +351,12 @@ const Dashboard = () => {
           ))}
         </div>
         <div className="submit-section">
-          <button className="submit-button" onClick={displayBro}>
-            Submit Test
+          <button className="submit-button" onClick={nextSection}>
+            {questionList[questionIdx]?.type === "aptitude"
+              ? "Go to Logical"
+              : questionList[questionIdx]?.type === "logical"
+              ? "Go to Technical"
+              : "Submit"}
           </button>
         </div>
       </div>
